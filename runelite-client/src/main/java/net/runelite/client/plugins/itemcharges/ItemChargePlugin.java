@@ -82,6 +82,9 @@ public class ItemChargePlugin extends Plugin
 		"Your dodgy necklace protects you\\..*It then crumbles to dust\\.");
 	private static final String RING_OF_RECOIL_BREAK_MESSAGE = "Your Ring of Recoil has shattered.";
 	private static final String BINDING_BREAK_TEXT = "Your Binding necklace has disintegrated.";
+	private static final Pattern NECKLACE_OF_BINDING_USE = Pattern.compile(
+		"You bind the temple's power into (?:Mist|Dust|Smoke|Mud|Steam|Lava) rune."
+	);
 	private static final Pattern RING_OF_FORGING_CHECK_PATTERN = Pattern.compile(
 		"You can smelt ([0-9]+|one) more pieces? of iron ore before a ring melts\\.");
 	private static final String RING_OF_FORGING_USED_TEXT = "You retrieve a bar of iron.";
@@ -140,6 +143,9 @@ public class ItemChargePlugin extends Plugin
 	private static final Pattern BRACELET_OF_CLAY_CHECK_PATTERN = Pattern.compile(
 		"You can mine (\\d{1,2}) more pieces? of soft clay before your bracelet crumbles to dust\\."
 	);
+
+	
+	
 
 	private static final int MAX_DODGY_CHARGES = 10;
 	private static final int MAX_BINDING_CHARGES = 16;
@@ -263,6 +269,7 @@ public class ItemChargePlugin extends Plugin
 			Matcher bloodEssenceCheckMatcher = BLOOD_ESSENCE_CHECK_PATTERN.matcher(message);
 			Matcher bloodEssenceExtractMatcher = BLOOD_ESSENCE_EXTRACT_PATTERN.matcher(message);
 			Matcher braceletOfClayCheckMatcher = BRACELET_OF_CLAY_CHECK_PATTERN.matcher(message);
+			Matcher necklaceOfBindingCheckMatcher = NECKLACE_OF_BINDING_USE_PATTERN.matcher(message);
 
 			if (message.contains(RING_OF_RECOIL_BREAK_MESSAGE))
 			{
@@ -316,6 +323,25 @@ public class ItemChargePlugin extends Plugin
 			{
 				updateAmuletOfBountyCharges(MAX_AMULET_OF_BOUNTY_CHARGES);
 			}
+			else if(necklaceOfBindingCheckMatcher.find())
+			{
+				final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+				final ItemContainer equipment = client.getItemContainer(InventoryID.WORN);
+
+				// Determine if the player created combination runes with necklace of binding equipped.
+				if (equipment == null)
+				{
+					return;
+				}
+
+				if (equipment.contains(ItemID.NECKLACE_OF_BINDING)
+				{
+					int charges = Ints.constrainToRange(getItemCharges(ItemChargeConfig.KEY_BINDING_NECKLACE) - 1, 0, MAX_BINDING_CHARGES);
+					updateBindingNecklaceCharges(charges);
+				}
+
+			}
+			
 			else if (message.contains(BINDING_BREAK_TEXT))
 			{
 				notifier.notify(config.bindingNotification(), BINDING_BREAK_TEXT);
